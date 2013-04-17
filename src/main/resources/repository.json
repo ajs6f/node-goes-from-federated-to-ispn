@@ -1,0 +1,26 @@
+{
+    "name": "repo",
+    "workspaces": {
+        "predefined": [],
+        "default": "default",
+        "allowCreation": false
+    },
+    "externalSources": {"targetDirectory": {
+        "classname": "org.modeshape.connector.filesystem.FileSystemConnector",
+        "directoryPath": "target/classes/test-objects",
+        "readonly": false,
+        "cacheTtlSeconds": 1,
+        "projections": ["default:/p1 => /"]
+    }},
+    "security": {
+        "anonymous": {
+            "roles": [
+                "readonly",
+                "readwrite",
+                "admin"
+            ],
+            "useOnFailedLogin": false
+        },
+        "providers": [{"classname": "servlet"}]
+    }
+}
