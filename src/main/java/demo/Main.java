@@ -2,7 +2,9 @@
 package demo;
 
 import static java.lang.System.exit;
+import static java.lang.System.in;
 import static java.lang.System.out;
+import static java.lang.Thread.currentThread;
 import static org.modeshape.jcr.RepositoryConfiguration.read;
 
 import java.util.concurrent.ExecutionException;
@@ -26,65 +28,67 @@ public class Main {
 
     JcrRepository repo;
 
+    static Session session;
+
     private final String repoName = "repo";
 
     private final static String repoConfig = "/repository.json";
 
-    public static void main(String[] args) {
-        try {
-            me.start();
-            Session session = me.repo.login();
+    public static void main(String[] args) throws Exception {
 
-            setup: {
+        me.start();
+
+        // only take action if we have been run with a parameter
+        // otherwise we assume that this is a "cluster listener"
+        if (args.length > 0) {
+            try {
+
                 session.getRootNode().addNode("nonfederated");
                 new JcrTools(true).uploadFileAndBlock(session, Main.class
                         .getResource("/thing2"), "/nonfederated");
-            }
 
-            action: {
                 final Workspace ws = session.getWorkspace();
                 ws.copy("/p1/thing1", "/nonfederated/thing1");
                 session.removeItem("/p1/thing1");
                 ws.copy("/nonfederated/thing2", "/p1/thing2");
                 session.removeItem("/nonfederated/thing2");
-            }
 
-            session.save();
-            session.logout();
-            session = me.repo.login();
+                session.save();
 
-            tests: {
                 assert !session.nodeExists("/p1/thing1") : "Shouldn't find /p1/thing1!";
                 assert session.nodeExists("/nonfederated/thing1") : "Should find /nonfederated/thing1!";
                 assert !session.nodeExists("/nonfederated/thing2") : "Shouldn't find /nonfederated/thing2!";
                 assert session.nodeExists("/p1/thing2") : "Should find /p1/thing2!";
+
+                session.save();
+                session.logout();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                exit(1);
             }
-
-            session.save();
-            session.logout();
-            me.stop();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            exit(1);
         }
+        in.read();
+        me.stop();
         exit(0);
-
     }
 
     private void start() throws ConfigurationException, ParsingException,
             RepositoryException {
         engine.start();
         out.println("Engine started...");
-        engine.deploy(read(this.getClass().getResource(repoConfig)));
+        assert (currentThread().getContextClassLoader()
+                .getResource("infinispan_configuration.xml")) != null : "Couldn't find ISPN config!";
+        repo = engine.deploy(read(this.getClass().getResource(repoConfig)));
         out.println("Repo deployed...");
-        engine.startRepository(repoName);
-        out.println("Repo started...");
-        repo = engine.getRepository(repoName);
+        session = me.repo.login();
+        out.println("Session acquired...");
     }
 
     private void stop() throws NoSuchRepositoryException, InterruptedException,
             ExecutionException {
+        session.logout();
+        out.println("Session released.");
         // block waiting for all repos to shutdown
         out.println("Engine stopping...");
         engine.shutdown().get();

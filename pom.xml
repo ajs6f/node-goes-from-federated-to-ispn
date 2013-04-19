@@ -4,15 +4,42 @@
   <groupId>demo</groupId>
   <artifactId>node-goes-from-federated-to-ispn</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  
+
   <dependencies>
     <dependency>
       <groupId>org.modeshape</groupId>
       <artifactId>modeshape-jcr</artifactId>
-      <version>3.2-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.jbossts</groupId>
+      <artifactId>jbossjta</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <!-- We could use SL4J with any other binding, but here we'll use Log4J -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
     </dependency>
   </dependencies>
-
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.modeshape.bom</groupId>
+        <artifactId>modeshape-bom-embedded</artifactId>
+        <version>3.2-SNAPSHOT</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
   <build>
     <plugins>
       <plugin>
@@ -50,6 +77,10 @@
       <snapshots>
         <enabled>true</enabled>
       </snapshots>
+    </repository>
+    <repository>
+      <id>JBoss-Releases</id>
+      <url>https://repository.jboss.org/nexus/content/repositories/releases/</url>
     </repository>
   </repositories>
 </project>
